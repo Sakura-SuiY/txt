@@ -1,0 +1,109 @@
+jdk下载地址:http://www.oracle.com/technetwork/java/javase/archive-139210.html  
+zookeeper下载地址:https://mirrors.aliyun.com/apache/zookeeper/
+
+#单机安装
+tar -zxf jdk-8u91-linux-x64.tar.gz #安装jdk
+mv jdk1.8.0_91/ /usr/local/java
+vim /etc/profile #更该环境变量
+   export JAVA_HOME=/usr/local/java
+   export PATH=$JAVA_HOME/bin:$JAVA_HOME/jre/bin:$PATH
+   export CLASSPATH=.:$JAVA_HOME/lib:$JAVA_HOME/jre/lib:$JAVA_HOME/lib/tools.jar
+source /etc/profile #重新生成环境变量
+java -version #查看jdk版本
+tar -zxf zookeeper-3.4.13.tar.gz #安装zookeeper
+mv zookeeper-3.4.13 /usr/local/zookeeper
+vim /etc/profile #更改环境变量
+   export ZOOKEEPER_HOME=/usr/local/zookeeper
+   export PATH=$ZOOKEEPER_HOME/bin:$PATH
+source /etc/profile #重新生成环境变量
+cp /usr/local/zookeeper/conf/zoo_sample.cfg /usr/local/zookeeper/conf/zoo.cfg #准备配置文件
+mkdir /usr/local/zookeeper/data #创建数据目录
+vim zoo.cfg #编辑配置文件
+   dataDir=/usr/local/zookeeper/data
+zkServer.sh start #启动zookeeper
+ss -antulp | grep java #查看监听端口
+zkCli.sh #客户端连接
+#伪集群配置
+(server0)
+    mkdir /usr/local/zookeeper/data_0 #创建数据目录
+    echo 0 > /usr/local/zookeeper/data_0/myid #创建myid文件
+    mkdir /usr/local/zookeeper/logs_0 #创建日志目录
+    cp /usr/local/zookeeper/conf/zoo_sample.cfg /usr/local/zookeeper/conf/zoo_0.cfg #准备配置文件
+    vim /usr/local/zookeeper/conf/zoo_0.cfg #编辑配置文件
+       tickTime=2000
+       initLimit=10
+       syncLimit=5
+       dataDir=/usr/local/zookeeper/data_0
+       clientPort=2180
+       dataLogDir=/usr/local/zookeeper/logs_0
+       server.0=127.0.0.1:2287:3387
+       server.1=127.0.0.1:2288:3388
+       server.2=127.0.0.1:2289:3389
+(server1)
+    mkdir /usr/local/zookeeper/data_1 #创建数据目录
+    mkdir /usr/local/zookeeper/logs_1 #创建日志目录
+    echo 1 > /usr/local/zookeeper/data_1/myid #创建myid文件
+    cp /usr/local/zookeeper/conf/zoo_sample.cfg /usr/local/zookeeper/conf/zoo_1.cfg #准备配置文件
+    vim /usr/local/zookeeper/conf/zoo_1.cfg #编辑配置文件
+       tickTime=2000
+       initLimit=10
+       syncLimit=5
+       dataDir=/usr/local/zookeeper/data_1
+       clientPort=2181
+       dataLogDir=/usr/local/zookeeper/logs_1
+       server.0=127.0.0.1:2287:3387
+       server.1=127.0.0.1:2288:3388
+       server.2=127.0.0.1:2289:3389
+(server2)
+    mkdir /usr/local/zookeeper/data_2 #创建数据目录
+    mkdir /usr/local/zookeeper/logs_2 #创建日志目录
+    echo 2 > /usr/local/zookeeper/data_2/myid #创建myid文件
+    cp /usr/local/zookeeper/conf/zoo_sample.cfg /usr/local/zookeeper/conf/zoo_2.cfg #准备配置文件
+    vim /usr/local/zookeeper/conf/zoo_2.cfg #编辑配置文件
+       tickTime=2000
+       initLimit=10
+       syncLimit=5
+       dataDir=/usr/local/zookeeper/data_1
+       clientPort=2181
+       dataLogDir=/usr/local/zookeeper/logs_1
+       server.0=127.0.0.1:2287:3387
+       server.1=127.0.0.1:2288:3388
+       server.2=127.0.0.1:2289:3389
+cd /usr/local/zookeeper/conf/
+zkServer.sh start zoo_0.cfg #启动服务,更改配置文件名即可
+ss -antulp | grep java #查看监听端口
+zkCli.sh -server 127.0.0.1:2180 #客户端连接,更改端口即可
+#集群配置
+(server0)
+    mkdir /usr/local/zookeeper/{data,logs} #创建数据目录.日志目录
+    echo 0 > /usr/local/zookeeper/data/myid #创建myid文件
+    cp /usr/local/zookeeper/conf/zoo_sample.cfg /usr/local/zookeeper/conf/zoo.cfg #准备配置文件
+    vim /usr/local/zookeeper/conf/zoo.cfg #编辑配置文件
+       tickTime=2000
+       initLimit=10
+       syncLimit=5
+       dataDir=/usr/local/zookeeper/data
+       clientPort=2181
+       dataLogDir=/usr/local/zookeeper/logs
+       server.0=172.240.24.180:2288:3388
+       server.1=172.240.24.181:2288:3388
+       server.2=172.240.24.182:2288:3388  
+       #ip地址根据实际情况更改
+    zkServer.sh start #启动服务
+    ss -antulp | grep java #查看监听端口
+scp  -r /usr/local/{java,zookeeper} root@ip:/usr/local/ # -r;递归复制文件
+scp  -r /usr/local/{java,zookeeper} root@ip:/usr/local/
+scp  /etc/profile root@ip:/etc/profile
+scp /etc/profile root@ip:/etc/profile  #将配置文件拷贝到其他主机上
+(server1)
+    source /etc/profile #重新生成环境变量
+    java -version #查看Java版本
+    echo 1 > /usr/local/zookeeper/data/myid #创建myid文件
+    zkServer.sh start #启动服务
+    ss -antulp | grep java #查看监听端口
+(server2)
+   source /etc/profile #重新生成环境变量
+   java -version #查看Java版本
+   echo 2 > /usr/local/zookeeper/data/myid #创建myid文件
+   zkServer.sh start #启动服务
+   ss -antulp | grep java #查看监听端口
