@@ -94,7 +94,7 @@ zkCli.sh -server 127.0.0.1:2180 #客户端连接,更改端口即可
 scp  -r /usr/local/{java,zookeeper} root@ip:/usr/local/ # -r;递归复制文件
 scp  -r /usr/local/{java,zookeeper} root@ip:/usr/local/
 scp  /etc/profile root@ip:/etc/profile
-scp /etc/profile root@ip:/etc/profile  #将配置文件拷贝到其他主机上
+scp /etc/profile root@ip:/etc/profile #将配置文件拷贝到其他主机上
 (server1)
     source /etc/profile #重新生成环境变量
     java -version #查看Java版本
