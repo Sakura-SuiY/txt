@@ -63,9 +63,9 @@ zkCli.sh #客户端连接
        tickTime=2000
        initLimit=10
        syncLimit=5
-       dataDir=/usr/local/zookeeper/data_1
-       clientPort=2181
-       dataLogDir=/usr/local/zookeeper/logs_1
+       dataDir=/usr/local/zookeeper/data_2
+       clientPort=2182
+       dataLogDir=/usr/local/zookeeper/logs_2
        server.0=127.0.0.1:2287:3387
        server.1=127.0.0.1:2288:3388
        server.2=127.0.0.1:2289:3389
