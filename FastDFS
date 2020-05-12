@@ -1,0 +1,77 @@
+libfastcommon下载地址:https://github.com/happyfish100/libfastcommon
+fastdfs下载地址:https://github.com/happyfish100/fastdfs
+nginx下载地址:http://nginx.org/download/
+fastdfs-nginx-module下载地址:https://github.com/happyfish100/fastdfs-nginx-module
+openssl下载地址:https://oomake.com/download/openssl
+pcre下载地址:https://ftp.pcre.org/pub/pcre/
+zlib下载地址:http://www.zlib.net/fossils/
+
+#安装libfastcommon
+git clone https://github.com/happyfish100/libfastcommon.git
+cd libfastcommon/
+./make.sh && ./make.sh  install
+#安装fastdfs
+git clone https://github.com/happyfish100/fastdfs.git
+cd fastdfs/
+./make.sh && ./make.sh  install
+#编辑tracker文件
+cd /etc/fdfs
+mkdir -p /data/fdfs_tracker
+cp tracker.conf.sample   tracker.conf
+vim tracker.conf
+    base_path = /data/fdfs_tracker
+/etc/init.d/fdfs_trackerd start
+ss -antpl | grep  tracker
+scp tracker.conf  192.168.10.20:/etc/fdfs/
+#编辑storage文件
+mkdir -p /data/fdfs_storage/base
+mkdir -p /data/fdfs_storage/store
+cp storage.conf.sample   storage.conf
+vim storage.conf
+    base_path = /data/fdfs_storage/base
+    store_path0 = /data/fdfs_storage/store
+    tracker_server = 192.168.10.10:22122
+    tracker_server = 192.168.10.20:22122
+/etc/init.d/fdfs_storaged   start
+ss -antlp  | grep storage
+scp storage.conf  192.168.10.20:/etc/fdfs/
+#编辑client文件
+mkdir /tmp/log
+cp client.conf.sample   client.conf
+vim client.conf
+    base_path=/tmp/log
+    tracker_server=192.168.10.10:22122
+    tracker_server=192.168.10.20:22122
+#安装nginx以及第三方插件
+git clone https://github.com/happyfish100/fastdfs-nginx-module.git
+yum install -y openssl openssl-devel zlib zlib-devel pcre pcre-devel
+groupadd www
+useradd -g www www
+tar  zxf  nginx
+cd nginx
+./configure  --prefix=/usr/local/nginx  --user=www --group=www --with-http_stub_status_module  --add-module=/usr/local/src/fastdfs-nginx-module/src  
+make && make install
+ln -s /usr/local/nginx/sbin/* /usr/local/bin/
+cd /usr/local/src/fastdfs-nginx-module/src
+cp mod_fastdfs.conf   /etc/fdfs/
+cd /usr/local/src/fastdfs/conf/
+cp  anti-steal.jpg   http.conf   mime.types   /etc/fdfs/
+touch   /var/log/mod_fastdfs.log
+chown  www:www  /var/log/mod_fastdfs.log
+vim /usr/local/nginx/conf/nginx.conf
+    location /group1/M00 {
+        root /data/fdfs_storage/store/;
+        ngx_fastdfs_module;
+    }
+vim /etc/fdfs/mod_fastdfs.conf
+    tracker_server=192.168.10.10:22122
+    tracker_server=192.168.10.20:22122
+    url_have_group_name = true
+    store_path0=/data/fdfs_storage/store
+    log_filename=/var/log/mod_fastdfs.log
+nginx -t
+nginx
+#上传图片测试
+fdfs_upload_file  /etc/fdfs/client.conf  a.jpg   
+
+
